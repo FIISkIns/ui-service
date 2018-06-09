@@ -33,7 +33,7 @@
 		</div>
 	</nav>
 
-	<div class="task-container">
+	<div class="container">
 		<div class="grid-container-two-columns">
 			<div tabindex="5" id="taskmenu">
 				<div id="task-button">
@@ -56,7 +56,7 @@
 			<div class="box" style="padding-top: 0.1rem; padding-left: 2rem; padding-right: 2rem;">
 				<h1 class="task-title">#{{$thisTask.index}} - {{.TaskInfo.Title}}</h1>
 				<h5 class="chapter">EXAMPLE COURSE - {{$thisTask.group}}</h5>
-				<div style="text-align: justify;">
+				<div class="task-body">
 					{{.Body}}
 				</div>
 				{{if hasKey $thisTask "nextTask"}}

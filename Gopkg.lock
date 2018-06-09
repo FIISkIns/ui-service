@@ -20,6 +20,12 @@
   version = "v1.0.1"
 
 [[projects]]
+  name = "github.com/dimfeld/httptreemux"
+  packages = ["."]
+  revision = "7f532489e7739b3d49df5c602bf63549881fe753"
+  version = "v5.0.1"
+
+[[projects]]
   name = "github.com/google/uuid"
   packages = ["."]
   revision = "064e2069ce9c359c118179501254f67d7d37ba24"
@@ -36,12 +42,6 @@
   packages = ["."]
   revision = "9d5f1277e9a8ed20c3684bda8fde67c05628518c"
   version = "v0.3.4"
-
-[[projects]]
-  name = "github.com/julienschmidt/httprouter"
-  packages = ["."]
-  revision = "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
-  version = "v1.1"
 
 [[projects]]
   name = "github.com/kelseyhightower/envconfig"
@@ -73,6 +73,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f13121651d15a938f8079a8d7a234d4d1fbfc0598b5d6d4714046471cf102503"
+  inputs-digest = "7bf60713f47bf6deb6ed5c6ffaff8aa3b42fbb9b142b91627a35f8fc300c0aca"
   solver-name = "gps-cdcl"
   solver-version = 1

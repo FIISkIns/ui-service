@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Masterminds/sprig"
-	"github.com/julienschmidt/httprouter"
+	"github.com/dimfeld/httptreemux"
 	"gopkg.in/russross/blackfriday.v2"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"path"
@@ -113,9 +114,22 @@ func renderPage(w http.ResponseWriter, page string, params interface{}) error {
 	return nil
 }
 
-func CourseTaskPage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func getStaticRoot(service string) string {
+	return "/static/" + service + "/"
+}
+
+func renderCourseMarkdown(course string, markdown string) template.HTML {
+	renderer := blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{
+		AbsolutePrefix: getStaticRoot(course),
+		Flags:          blackfriday.CommonHTMLFlags,
+	})
+
+	return template.HTML(blackfriday.Run([]byte(markdown), blackfriday.WithRenderer(renderer)))
+}
+
+func CourseTaskPage(w http.ResponseWriter, _ *http.Request, ps map[string]string) {
 	courseTasksChan := getCourseTasks(config.CourseUrl)
-	taskInfoChan := getTaskInfo(config.CourseUrl, ps.ByName("task"))
+	taskInfoChan := getTaskInfo(config.CourseUrl, ps["task"])
 
 	courseTasks := <-courseTasksChan
 	if courseTasks.Err != nil {
@@ -137,16 +151,48 @@ func CourseTaskPage(w http.ResponseWriter, r *http.Request, ps httprouter.Params
 	}{
 		Tasks:    courseTasks.Val,
 		TaskInfo: taskInfo.Val,
-		Body:     template.HTML(blackfriday.Run([]byte(taskInfo.Val.Body))),
+		Body:     renderCourseMarkdown("example", taskInfo.Val.Body),
 	})
+}
+
+func getServiceDirectStaticUrl(service string) string {
+	if service == "achievements" {
+		// TODO
+		return ""
+	}
+
+	// TODO: call course manager
+	return fmt.Sprintf("%v/static/", config.CourseUrl)
+}
+
+func StaticResourceProxy(w http.ResponseWriter, r *http.Request, ps map[string]string) {
+	res, err := http.Get(fmt.Sprintf("%v/%v", getServiceDirectStaticUrl(ps["service"]), ps["filepath"]))
+	if err != nil {
+		if res != nil && res.StatusCode == 404 {
+			http.NotFound(w, r)
+			return
+		} else {
+			http.Error(w, "Upstream error", 500)
+			log.Println("StaticResourceProxy:", err)
+			return
+		}
+	}
+	defer res.Body.Close()
+
+	io.Copy(w, res.Body)
+}
+
+func StaticResource(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	http.StripPrefix("/static/", http.FileServer(http.Dir(staticPath))).ServeHTTP(w, r)
 }
 
 func main() {
 	initConfig()
 
-	router := httprouter.New()
+	router := httptreemux.New()
 	router.GET("/course/example/:task", CourseTaskPage)
-	router.ServeFiles("/static/*filepath", http.Dir(staticPath))
+	router.GET("/static/:service/*filepath", StaticResourceProxy)
+	router.GET("/static/*filepath", StaticResource)
 
 	log.Printf("Listening on port %v...\n", config.Port)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(config.Port), router))
