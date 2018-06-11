@@ -14,7 +14,7 @@ const templatePath = "template"
 
 const sessionUserKey = "user"
 
-func renderPage(w http.ResponseWriter, page string, params interface{}) error {
+func renderPage(w http.ResponseWriter, page string, params map[string]interface{}) error {
 	pageFile := page + ".html"
 	t, err := template.New(pageFile).Funcs(sprig.FuncMap()).
 		ParseFiles(path.Join(templatePath, "layout.html"), path.Join(templatePath, pageFile))
@@ -43,11 +43,34 @@ func renderCourseMarkdown(course string, markdown string) template.HTML {
 	return template.HTML(blackfriday.Run([]byte(markdown), blackfriday.WithRenderer(renderer)))
 }
 
-func HomePage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+func buildPageParams(r *http.Request, extra map[string]interface{}) map[string]interface{} {
 	userId, _ := sessionManager.Load(r).GetString(sessionUserKey)
-	log.Println("User:", userId)
+	userInfo, _ := external.GetUserInfo(userId)
 
-	renderPage(w, "home", nil)
+	params := map[string]interface{}{
+		"User": userInfo,
+	}
+	if extra != nil {
+		for k, v := range extra {
+			params[k] = v
+		}
+	}
+	return params
+}
+
+func logOut(w http.ResponseWriter, r *http.Request, url string) {
+	sessionManager.Load(r).Clear(w)
+	http.Redirect(w, r, url, http.StatusFound)
+}
+
+func LogoutPage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	logOut(w, r, "/")
+}
+
+func HomePage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	renderPage(w, "home", buildPageParams(r, map[string]interface{}{
+		"Active": "home",
+	}))
 }
 
 func LoginPage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
@@ -62,7 +85,7 @@ func LoginPage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	http.Redirect(w, r, res.RedirectUrl, http.StatusFound)
 }
 
-func CourseTaskPage(w http.ResponseWriter, _ *http.Request, ps map[string]string) {
+func CourseTaskPage(w http.ResponseWriter, r *http.Request, ps map[string]string) {
 	courseTasksChan := external.GetCourseTasks(config.CourseUrl)
 	taskInfoChan := external.GetTaskInfo(config.CourseUrl, ps["task"])
 
@@ -80,13 +103,10 @@ func CourseTaskPage(w http.ResponseWriter, _ *http.Request, ps map[string]string
 		return
 	}
 
-	renderPage(w, "task", &struct {
-		Tasks    []external.TaskGroup
-		TaskInfo *external.TaskInfo
-		Body     template.HTML
-	}{
-		Tasks:    courseTasks.Val,
-		TaskInfo: taskInfo.Val,
-		Body:     renderCourseMarkdown("example", taskInfo.Val.Body),
-	})
+	renderPage(w, "task", buildPageParams(r, map[string]interface{}{
+		"Active":   "course",
+		"Tasks":    courseTasks.Val,
+		"TaskInfo": taskInfo.Val,
+		"TaskBody": renderCourseMarkdown("example", taskInfo.Val.Body),
+	}))
 }

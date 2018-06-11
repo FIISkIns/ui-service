@@ -57,6 +57,7 @@ func main() {
 	router := httptreemux.New()
 	router.GET("/", HomePage)
 	router.GET("/login", LoginPage)
+	router.GET("/logout", LogoutPage)
 	router.GET("/course/example/:task", CourseTaskPage)
 	router.GET("/static/:service/*filepath", StaticResourceProxy)
 	router.GET("/static/*filepath", StaticResource)

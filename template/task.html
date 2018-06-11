@@ -1,77 +1,41 @@
-<!DOCTYPE html>
-<html>
+{{define "content"}}
 
-<head>
-	<meta charset="UTF-8">
-	<title>SkIns</title>
-	<link rel="stylesheet" type="text/css" href="/static/style.css">
-	<script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-
-<body>
-	<nav>
-		<div class="container">
-			<a href="#" class="item logo">SkIns</a>
-
-			<a tabindex="4" href="#" class="item right"><i class="fab fa-fw fa-facebook"></i> Log in</a>
-
-			<div class="menu">
-				<a tabindex="0" href="#" class="item">Learn</a>
-				<div tabindex="1" id="coursemenu" class="item active">
-					<span>Courses &#9662;</span>
-					<div class="submenu">
-						<div class="submenu-section">YOUR COURSES</div>
-						<a href="#" class="item active">Origami</a>
-						<div class="submenu-section">AVAILABLE COURSES</div>
-						<a href="#" class="item">Survival</a>
-						<a href="#" class="item">Self-defence</a>
-					</div>
-				</div>
-				<a tabindex="2" href="#" class="item">Profile</a>
+<div class="container">
+	<div class="grid-container-two-columns">
+		<div tabindex="5" id="taskmenu">
+			<div id="task-button">
+				<span>&#9776; Tasks</span>
 			</div>
-		</div>
-	</nav>
-
-	<div class="container">
-		<div class="grid-container-two-columns">
-			<div tabindex="5" id="taskmenu">
-				<div id="task-button">
-					<span>&#9776; Tasks</span>
-				</div>
-				<div class="grey-box">
-					{{$thisId := .TaskInfo.Id}}
-					{{$thisTask := dict}}
-					{{range .Tasks}}
-						{{$groupTitle := .Title | upper}}
-						<h5 style="color: black;">{{$groupTitle}}</h5>
-						<ul class="fa-ul task">
-							{{range $i, $t := .Tasks}}
-								<li><i class="fa-li {{if eq $t.Id $thisId}}{{$_ := set $thisTask "index" ($i | add1)}}{{$_ := set $thisTask "group" $groupTitle}}fas fa-dot-circle{{else if hasKey $thisTask "index"}}{{if not (hasKey $thisTask "nextTask")}}{{$_ := set $thisTask "nextTask" .}}{{end}}far fa-circle{{else}}fas fa-check{{end}}"></i><a href="{{.Id}}" class="task">Task {{$i | add1}} - {{.Title}}</a></li>
-							{{end}}
-						</ul>
-					{{end}}
-				</div>
-			</div>
-			<div class="box" style="padding-top: 0.1rem; padding-left: 2rem; padding-right: 2rem;">
-				<h1 class="task-title">#{{$thisTask.index}} - {{.TaskInfo.Title}}</h1>
-				<h5 class="chapter">EXAMPLE COURSE - {{$thisTask.group}}</h5>
-				<div class="task-body">
-					{{.Body}}
-				</div>
-				{{if hasKey $thisTask "nextTask"}}
-					<div class="grid-container-two-columns">
-						<a href="{{$thisTask.nextTask.Id}}" class="button"><span>Continue</span></a>
-						<div>
-							<p>
-								Next task: {{$thisTask.nextTask.Title}}
-							</p>
-						</div>
-					</div>
+			<div class="grey-box">
+				{{$thisId := .TaskInfo.Id}}
+				{{$thisTask := dict}}
+				{{range .Tasks}}
+					{{$groupTitle := .Title | upper}}
+					<h5 style="color: black;">{{$groupTitle}}</h5>
+					<ul class="fa-ul task">
+						{{range $i, $t := .Tasks}}
+							<li><i class="fa-li {{if eq $t.Id $thisId}}{{$_ := set $thisTask "index" ($i | add1)}}{{$_ := set $thisTask "group" $groupTitle}}fas fa-dot-circle{{else if hasKey $thisTask "index"}}{{if not (hasKey $thisTask "nextTask")}}{{$_ := set $thisTask "nextTask" .}}{{end}}far fa-circle{{else}}fas fa-check{{end}}"></i><a href="{{.Id}}" class="task">Task {{$i | add1}} - {{.Title}}</a></li>
+						{{end}}
+					</ul>
 				{{end}}
 			</div>
 		</div>
+		<div class="box" style="padding-top: 0.1rem; padding-left: 2rem; padding-right: 2rem;">
+			<h1 class="task-title">#{{$thisTask.index}} - {{.TaskInfo.Title}}</h1>
+			<h5 class="chapter">EXAMPLE COURSE - {{$thisTask.group}}</h5>
+			<div class="task-body">
+				{{.TaskBody}}
+			</div>
+			{{if hasKey $thisTask "nextTask"}}
+				<div class="grid-container-two-columns">
+					<a href="{{$thisTask.nextTask.Id}}" class="button"><span>Continue</span></a>
+					<div>
+						<p>Next task: {{$thisTask.nextTask.Title}}</p>
+					</div>
+				</div>
+			{{end}}
+		</div>
 	</div>
-</body>
+</div>
 
-</html>
+{{end}}

@@ -1,4 +1,4 @@
-{{ define "layout" }}
+{{define "layout"}}
 
 <!DOCTYPE html>
 <html>
@@ -8,33 +8,44 @@
     <link rel="stylesheet" type="text/css" href="/static/style.css">
     <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="origin-when-cross-origin" />
 </head>
 <body>
     <nav>
         <div class="container">
             <a href="/" class="item logo">SkIns</a>
 
-            <a tabindex="4" href="/login" class="item right"><i class="fab fa-fw fa-facebook"></i> Log in</a>
+            {{with .User}}
+                <div tabindex="4" id="usermenu" class="item right">
+                    <img class="user-image-small" alt="user image" src="{{.Picture}}">
+                {{.Name}} &nbsp;&#9662;
+                    <div class="submenu">
+                        <a href="/logout" class="item">Log out</a>
+                    </div>
+                </div>
+            {{else}}
+                <a tabindex="4" href="/login" class="item right"><i class="fab fa-fw fa-facebook"></i> Log in</a>
+            {{end}}
 
             <div class="menu">
-                <a tabindex="0" href="/" class="item active">Learn</a>
-                <div tabindex="1" id="coursemenu" class="item">
+                <a tabindex="0" href="/" class="item {{if eq "home" .Active}}active{{end}}">Learn</a>
+                <div tabindex="1" id="coursemenu" class="item {{if eq "course" .Active}}active{{end}}">
                     <span>Courses &#9662;</span>
                     <div class="submenu">
                         <div class="submenu-section">YOUR COURSES</div>
-                        <a href="course.html" class="item">Origami</a>
+                        <a href="/course/origami" class="item">Origami</a>
                         <div class="submenu-section">AVAILABLE COURSES</div>
-                        <a href="course.html" class="item">Survival</a>
-                        <a href="course.html" class="item">Self-defence</a>
+                        <a href="/course/survival" class="item">Survival</a>
+                        <a href="/course/selfdefence" class="item">Self-defence</a>
                     </div>
                 </div>
-                <a tabindex="2" href="profile.html" class="item">Profile</a>
+                <a tabindex="2" href="/profile" class="item {{if eq "profile" .Active}}active{{end}}">Profile</a>
             </div>
         </div>
     </nav>
 
-    {{ template "content" }}
+    {{template "content" .}}
 </body>
 </html>
 
-{{ end }}
+{{end}}
