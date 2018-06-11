@@ -1,0 +1,40 @@
+{{ define "layout" }}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SkIns</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a href="/" class="item logo">SkIns</a>
+
+            <a tabindex="4" href="/login" class="item right"><i class="fab fa-fw fa-facebook"></i> Log in</a>
+
+            <div class="menu">
+                <a tabindex="0" href="/" class="item active">Learn</a>
+                <div tabindex="1" id="coursemenu" class="item">
+                    <span>Courses &#9662;</span>
+                    <div class="submenu">
+                        <div class="submenu-section">YOUR COURSES</div>
+                        <a href="course.html" class="item">Origami</a>
+                        <div class="submenu-section">AVAILABLE COURSES</div>
+                        <a href="course.html" class="item">Survival</a>
+                        <a href="course.html" class="item">Self-defence</a>
+                    </div>
+                </div>
+                <a tabindex="2" href="profile.html" class="item">Profile</a>
+            </div>
+        </div>
+    </nav>
+
+    {{ template "content" }}
+</body>
+</html>
+
+{{ end }}

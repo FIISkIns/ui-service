@@ -14,6 +14,15 @@
   version = "v2.15.0"
 
 [[projects]]
+  name = "github.com/alexedwards/scs"
+  packages = [
+    ".",
+    "stores/cookiestore"
+  ]
+  revision = "a01923edcb7f83c0c6ae7e70ad03f293e6ec9e26"
+  version = "v1.3.0"
+
+[[projects]]
   name = "github.com/aokoli/goutils"
   packages = ["."]
   revision = "3391d3790d23d03408670993e957e8f408993c34"
@@ -59,7 +68,10 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
+    "nacl/secretbox",
     "pbkdf2",
+    "poly1305",
+    "salsa20/salsa",
     "scrypt"
   ]
   revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
@@ -73,6 +85,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7bf60713f47bf6deb6ed5c6ffaff8aa3b42fbb9b142b91627a35f8fc300c0aca"
+  inputs-digest = "d90a4ccd558fa43f6781e3971a48213f4394723259dfc1481f9f3c2e2a7cbb89"
   solver-name = "gps-cdcl"
   solver-version = 1
