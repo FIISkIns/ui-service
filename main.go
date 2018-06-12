@@ -16,7 +16,7 @@ const staticPath = "static"
 var sessionManager *scs.Manager
 
 func getStaticRoot(service string) string {
-	return "/static/" + service + "/"
+	return "/static/" + service
 }
 
 func getServiceDirectStaticUrl(service string) (string, error) {
@@ -28,7 +28,7 @@ func getServiceDirectStaticUrl(service string) (string, error) {
 	if course.Err != nil {
 		return "", course.Err
 	}
-	return course.Val.Url, nil
+	return fmt.Sprintf("%v/static", course.Val.Url), nil
 }
 
 func StaticResourceProxy(w http.ResponseWriter, r *http.Request, ps map[string]string) {
@@ -43,6 +43,7 @@ func StaticResourceProxy(w http.ResponseWriter, r *http.Request, ps map[string]s
 	if err != nil {
 		if res != nil && res.StatusCode == http.StatusNotFound {
 			http.NotFound(w, r)
+			log.Println("Static asset not found on %v: %v", staticUrl, ps["filepath"])
 			return
 		} else {
 			http.Error(w, "Upstream error", http.StatusInternalServerError)
@@ -68,11 +69,12 @@ func main() {
 	router.GET("/", HomePage)
 	router.GET("/login", LoginPage)
 	router.GET("/logout", LogoutPage)
-	router.GET("/course/example/:task", CourseTaskPage)
+	router.GET("/course/:course", CourseRootPage)
+	router.GET("/course/:course/:task", CourseTaskPage)
 	router.GET("/profile", ProfilePage)
 	router.GET("/ping", StatsPing)
-	router.GET("/static/:service/*filepath", StaticResourceProxy)
 	router.GET("/static/*filepath", StaticResource)
+	router.GET("/static/:service/*filepath", StaticResourceProxy)
 
 	log.Printf("Listening on port %v...\n", config.Port)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(config.Port), router))

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 )
 
 type Achievement struct {
@@ -37,6 +38,10 @@ func GetUserAchievements(userId string) <-chan AchievementsResult {
 			ret <- AchievementsResult{Err: err}
 			return
 		}
+
+		sort.Slice(achievements, func(i, j int) bool {
+			return achievements[i].Completion > achievements[j].Completion
+		})
 
 		ret <- AchievementsResult{Val: achievements}
 	}()

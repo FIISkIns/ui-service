@@ -10,13 +10,14 @@ import (
 	"net/http"
 	"path"
 	"time"
+	"fmt"
 )
 
 const templatePath = "template"
 
 const sessionUserKey = "user"
 
-func renderPage(w http.ResponseWriter, r *http.Request, page string, params map[string]interface{}) {
+func renderPage(w http.ResponseWriter, page string, params map[string]interface{}) {
 	pageFile := page + ".html"
 	t, err := template.New(pageFile).Funcs(sprig.FuncMap()).
 		ParseFiles(path.Join(templatePath, "layout.html"), path.Join(templatePath, pageFile))
@@ -66,9 +67,9 @@ func basePageParams(w http.ResponseWriter, r *http.Request, public bool) (map[st
 	}
 
 	if userInfo != nil {
-		log.Printf("%v -> user %v (%v)", r.URL.String(), userId, userInfo.Name)
+		log.Printf("%v -> %v", userId, r.URL.String())
 	} else {
-		log.Printf("%v -> guest", r.URL.String())
+		log.Printf("guest -> %v", r.URL.String())
 	}
 
 	var pingChan <-chan error
@@ -77,6 +78,7 @@ func basePageParams(w http.ResponseWriter, r *http.Request, public bool) (map[st
 	}
 
 	courseListChan := external.GetCourseList()
+	courseProgressChan := external.GetAllCourseProgress(userId)
 
 	if pingChan != nil {
 		err = <-pingChan
@@ -92,9 +94,40 @@ func basePageParams(w http.ResponseWriter, r *http.Request, public bool) (map[st
 		return nil, userId
 	}
 
+	courseInfo := make(map[string]*external.CourseInfo)
+	for _, info := range courseList.Val {
+		courseInfo[info.Id] = &info
+	}
+
+	courseProgress := <-courseProgressChan
+	if courseProgress.Err != nil {
+		log.Println("GetAllCourseProgress:", courseProgress.Err)
+		http.Error(w, "Could not access course progress", http.StatusInternalServerError)
+		return nil, userId
+	}
+
+	startedCourses := make([]string, 0)
+	availableCourses := make([]string, 0)
+	for course, progress := range courseProgress.Val {
+		started := 0
+		for _, task := range progress {
+			if task.Progress != "not started" {
+				started++
+			}
+		}
+		if started > 1 {
+			startedCourses = append(startedCourses, course)
+		} else {
+			availableCourses = append(availableCourses, course)
+		}
+	}
+
 	return map[string]interface{}{
-		"User":    userInfo,
-		"Courses": courseList.Val,
+		"User":             userInfo,
+		"Courses":          courseInfo,
+		"StartedCourses":   startedCourses,
+		"AvailableCourses": availableCourses,
+		"CourseProgress":   courseProgress.Val,
 	}, userId
 }
 
@@ -110,7 +143,7 @@ func HomePage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	}
 	params["Active"] = "home"
 
-	renderPage(w, r, "home", params)
+	renderPage(w, "home", params)
 }
 
 func LoginPage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
@@ -133,6 +166,29 @@ func LogoutPage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	logOut(w, r, "/")
 }
 
+func CourseRootPage(w http.ResponseWriter, r *http.Request, ps map[string]string) {
+	params, _ := basePageParams(w, r, false)
+	if params == nil {
+		return
+	}
+
+	var nextTask string
+	for _, task := range params["CourseProgress"].(map[string][]external.TaskProgress)[ps["course"]] {
+		if task.Progress == "not started" && nextTask == "" {
+			nextTask = task.TaskId
+		} else if task.Progress != "not started" {
+			nextTask = task.TaskId
+		}
+	}
+	if nextTask == "" {
+		log.Println("Course", ps["course"], "has no tasks")
+		http.Error(w, "Course is broken, come back later", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/course/%v/%v", ps["course"], nextTask), http.StatusFound)
+}
+
 func CourseTaskPage(w http.ResponseWriter, r *http.Request, ps map[string]string) {
 	params, _ := basePageParams(w, r, false)
 	if params == nil {
@@ -140,8 +196,15 @@ func CourseTaskPage(w http.ResponseWriter, r *http.Request, ps map[string]string
 	}
 	params["Active"] = "course"
 
-	courseTasksChan := external.GetCourseTasks(config.CourseUrl)
-	taskInfoChan := external.GetTaskInfo(config.CourseUrl, ps["task"])
+	courseInfo := <-external.GetCourseInfo(ps["course"])
+	if courseInfo.Err != nil {
+		log.Println("GetCourseInfo:", courseInfo.Err)
+		http.Error(w, "Could not access course manager", http.StatusInternalServerError)
+		return
+	}
+
+	courseTasksChan := external.GetCourseTasks(courseInfo.Val.Url)
+	taskInfoChan := external.GetTaskInfo(courseInfo.Val.Url, ps["task"])
 
 	courseTasks := <-courseTasksChan
 	if courseTasks.Err != nil {
@@ -160,7 +223,7 @@ func CourseTaskPage(w http.ResponseWriter, r *http.Request, ps map[string]string
 	params["TaskInfo"] = taskInfo.Val
 	params["TaskBody"] = renderCourseMarkdown("example", taskInfo.Val.Body)
 
-	renderPage(w, r, "task", params)
+	renderPage(w, "task", params)
 }
 
 func ProfilePage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
@@ -189,7 +252,7 @@ func ProfilePage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	}
 	params["Achievements"] = achievements.Val
 
-	renderPage(w, r, "profile", params)
+	renderPage(w, "profile", params)
 }
 
 func StatsPing(w http.ResponseWriter, r *http.Request, _ map[string]string) {

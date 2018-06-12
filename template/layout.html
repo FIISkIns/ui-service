@@ -18,7 +18,7 @@
             {{with .User}}
                 <div tabindex="4" id="usermenu" class="item right">
                     <img class="user-image-small" alt="user image" src="{{.Picture}}">
-                {{.Name}} &nbsp;&#9662;
+                    {{.Name}} &nbsp;&#9662;
                     <div class="submenu">
                         <a href="/logout" class="item">Log out</a>
                     </div>
@@ -32,11 +32,22 @@
                 <div tabindex="1" id="coursemenu" class="item {{if eq "course" .Active}}active{{end}}">
                     <span>Courses &#9662;</span>
                     <div class="submenu">
-                        <div class="submenu-section">YOUR COURSES</div>
-                        <a href="/course/origami" class="item">Origami</a>
-                        <div class="submenu-section">AVAILABLE COURSES</div>
-                        <a href="/course/survival" class="item">Survival</a>
-                        <a href="/course/selfdefence" class="item">Self-defence</a>
+                        {{range $i, $course := .StartedCourses}}
+                            {{if not $i}}
+                                <div class="submenu-section">YOUR COURSES</div>
+                            {{end}}
+                            {{with index $.Courses $course}}
+                                <a href="/course/{{.Id}}" class="item">{{.Name}}</a>
+                            {{end}}
+                        {{end}}
+                        {{range $i, $course := .AvailableCourses}}
+                            {{if not $i}}
+                                <div class="submenu-section">AVAILABLE COURSES</div>
+                            {{end}}
+                            {{with index $.Courses $course}}
+                                <a href="/course/{{.Id}}" class="item">{{.Name}}</a>
+                            {{end}}
+                        {{end}}
                     </div>
                 </div>
                 <a tabindex="2" href="/profile" class="item {{if eq "profile" .Active}}active{{end}}">Profile</a>
