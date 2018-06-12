@@ -59,6 +59,7 @@ func main() {
 	router.GET("/login", LoginPage)
 	router.GET("/logout", LogoutPage)
 	router.GET("/course/example/:task", CourseTaskPage)
+	router.GET("/profile", ProfilePage)
 	router.GET("/static/:service/*filepath", StaticResourceProxy)
 	router.GET("/static/*filepath", StaticResource)
 

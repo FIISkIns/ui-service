@@ -4,21 +4,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type LoginResponse struct {
-	RedirectUrl string `json:"redirectUrl"`
-	UserId      string `json:"userId"`
+	RedirectUrl string
+	UserId      string
 }
 
 type UserInfo struct {
-	Id      string `json:"id"`
-	Name    string `json:"name"`
-	Picture string `json:"picture"`
+	Id        string
+	Name      string
+	Picture   string
+	FirstSeen string
 }
 
-func DoLoginFlow(query string) (response *LoginResponse, err error) {
-	res, err := http.Get(fmt.Sprintf("%v/login?%v", config.LoginUrl, query))
+func DoLoginFlow(query string, returnUrl string) (response *LoginResponse, err error) {
+	q, _ := url.ParseQuery(query)
+	q.Add("return_url", returnUrl)
+
+	res, err := http.Get(fmt.Sprintf("%v/login?%v", config.LoginUrl, q.Encode()))
 	if err != nil {
 		return
 	}
