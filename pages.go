@@ -43,41 +43,59 @@ func renderCourseMarkdown(course string, markdown string) template.HTML {
 	return template.HTML(blackfriday.Run([]byte(markdown), blackfriday.WithRenderer(renderer)))
 }
 
-func basePageParams(w http.ResponseWriter, r *http.Request, public bool) map[string]interface{} {
+func basePageParams(w http.ResponseWriter, r *http.Request, public bool) (map[string]interface{}, string) {
 	userId, _ := sessionManager.Load(r).GetString(sessionUserKey)
 	userInfo, err := external.GetUserInfo(userId)
 	if err != nil {
 		log.Println("GetUserInfo:", err)
 		logOut(w, r, r.URL.String())
-		return nil
-	}
-
-	if userInfo == nil && !public {
-		LoginPage(w, r, nil)
-		return nil
+		return nil, ""
 	}
 
 	if userInfo != nil {
-		go external.UserStatsPing(userId)
-
 		firstSeen, err := time.Parse(time.RFC3339, userInfo.FirstSeen)
 		if err == nil {
 			userInfo.FirstSeen = humanize.Time(firstSeen)
 		}
 	}
 
+	if userInfo == nil && !public {
+		LoginPage(w, r, nil)
+		userId = ""
+		return nil, ""
+	}
+
+	if userInfo != nil {
+		log.Printf("%v -> user %v (%v)", r.URL.String(), userId, userInfo.Name)
+	} else {
+		log.Printf("%v -> guest", r.URL.String())
+	}
+
+	var pingChan <-chan error
+	if userInfo != nil {
+		pingChan = external.UserStatsPing(userId)
+	}
+
 	courseListChan := external.GetCourseList()
+
+	if pingChan != nil {
+		err = <-pingChan
+		if err != nil {
+			log.Println("UserStatsPing:", err)
+		}
+	}
+
 	courseList := <-courseListChan
 	if courseList.Err != nil {
 		log.Println("GetCourseList:", courseList.Err)
 		http.Error(w, "Could not access course manager", http.StatusInternalServerError)
-		return nil
+		return nil, userId
 	}
 
 	return map[string]interface{}{
 		"User":    userInfo,
 		"Courses": courseList.Val,
-	}
+	}, userId
 }
 
 func logOut(w http.ResponseWriter, r *http.Request, url string) {
@@ -86,7 +104,7 @@ func logOut(w http.ResponseWriter, r *http.Request, url string) {
 }
 
 func HomePage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
-	params := basePageParams(w, r, true)
+	params, _ := basePageParams(w, r, true)
 	if params == nil {
 		return
 	}
@@ -116,7 +134,7 @@ func LogoutPage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 }
 
 func CourseTaskPage(w http.ResponseWriter, r *http.Request, ps map[string]string) {
-	params := basePageParams(w, r, false)
+	params, _ := basePageParams(w, r, false)
 	if params == nil {
 		return
 	}
@@ -146,11 +164,36 @@ func CourseTaskPage(w http.ResponseWriter, r *http.Request, ps map[string]string
 }
 
 func ProfilePage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
-	params := basePageParams(w, r, false)
+	params, userId := basePageParams(w, r, false)
 	if params == nil {
 		return
 	}
 	params["Active"] = "profile"
 
+	statsChan := external.GetUserStats(userId)
+	achievementsChan := external.GetUserAchievements(userId)
+
+	stats := <-statsChan
+	if stats.Err != nil {
+		log.Println("GetUserStats:", stats.Err)
+		http.Error(w, "Could not access stats service", http.StatusInternalServerError)
+		return
+	}
+	params["UserStats"] = stats.Val
+
+	achievements := <-achievementsChan
+	if achievements.Err != nil {
+		log.Println("GetUserAchievements:", achievements.Err)
+		http.Error(w, "Could not access achievement service", http.StatusInternalServerError)
+		return
+	}
+	params["Achievements"] = achievements.Val
+
 	renderPage(w, r, "profile", params)
+}
+
+func StatsPing(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	userId, _ := sessionManager.Load(r).GetString(sessionUserKey)
+	external.UserStatsPing(userId)
+	w.WriteHeader(http.StatusNoContent)
 }

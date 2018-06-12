@@ -16,9 +16,9 @@
                         <hr class="white-hr">
                         <span class="big">
                             Achievements: 3 <small>out of</small> 10<br>
-                            Courses: 1 <small>out of</small> 3<br>
-                            Time spent learning: 2 h<br>
-                            Longest streak: 1 days<br>
+                            Courses: {{.UserStats.CompletedCourses}} <small>out of</small> {{.UserStats.StartedCourses}}<br>
+                            Time spent learning: {{div .UserStats.TimeSpent 3600}} h<br>
+                            Longest streak: {{.UserStats.LongestStreak}} {{.UserStats.LongestStreak | plural "day" "days"}}<br>
                             Title: Newbie
                         </span>
                         <hr class="white-hr">
@@ -31,31 +31,21 @@
                 <h1 style="width: 100%;text-align: center;"> Achievements </h1>
                 <hr class="black-hr">
                 <div id="achievements-container">
-                    <div class="achievement-box">
-                        <img class="achievement-icon" src="images/icon.png" alt="achievement">
-                        <div class="achievement-description">
-                            <span class="big"><strong>Member of tha pack!</strong></span><br>
-                            <small>Get started with any course.</small>
-                            <br>
-                            <div class="progress-bar">
-                                <div class="percentage">100%</div>
-                                <div class="bar100"></div>
+                    {{range $i, $achievement := .Achievements}}
+                        {{if $i}}<hr class="black-hr">{{end}}
+                        <div class="achievement-box">
+                            <img class="achievement-icon" src="/static/achievements/{{$achievement.Icon}}" alt="achievement">
+                            <div class="achievement-description">
+                                <span class="big"><strong>{{$achievement.Title}}</strong></span><br>
+                                <small>{{$achievement.Description}}</small>
+                                <br>
+                                <div class="progress-bar">
+                                    <div class="percentage">{{$achievement.Completion}}%</div>
+                                    <div class="bar" style="width: {{$achievement.Completion}}%"></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <hr class="black-hr">
-                    <div class="achievement-box">
-                        <img class="achievement-icon" src="images/globe.png" alt="achievement">
-                        <div class="achievement-description">
-                            <span class="big"><strong>Spread the word!</strong></span><br>
-                            <small>Share a course on Facebook.</small>
-                            <br>
-                            <div class="progress-bar">
-                                <div class="percentage">100%</div>
-                                <div class="bar100"></div>
-                            </div>
-                        </div>
-                    </div>
+                    {{end}}
                 </div>
                 <hr class="black-hr" style="margin-bottom: 1rem;">
             </div>

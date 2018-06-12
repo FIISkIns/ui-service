@@ -49,7 +49,7 @@ func UserStatsPing(userId string) <-chan error {
 	ret := make(chan error, 1)
 
 	go func() {
-		res, err := http.Get(fmt.Sprintf("%v/%v/ping", config.StatsUrl, userId))
+		res, err := http.Post(fmt.Sprintf("%v/%v/ping", config.StatsUrl, userId), "", nil)
 		res.Body.Close()
 		ret <- err
 	}()

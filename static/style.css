@@ -476,24 +476,9 @@ a.task {
 	line-height: 1.5rem;
 }
 
-.bar100 {
+.progress-bar > .bar {
 	border-radius: 2rem;
 	background-color: #80d4ff;
-	width: 100%;
-	height: 100%;
-}
-
-.bar50 {
-	border-radius: 2rem 0 0 2rem;
-	background-color: #80d4ff;
-	width: 50%;
-	height: 100%;
-}
-
-.bar25 {
-	border-radius: 2rem 0 0 2rem;
-	background-color: #80d4ff;
-	width: 25%;
 	height: 100%;
 }
 
