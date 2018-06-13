@@ -17,4 +17,6 @@ ENTRYPOINT ["./app"]
 
 COPY template ./template
 COPY static ./static
+
 ENV UI_PORT 80
+EXPOSE 80

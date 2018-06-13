@@ -43,7 +43,7 @@ func StaticResourceProxy(w http.ResponseWriter, r *http.Request, ps map[string]s
 	if err != nil {
 		if res != nil && res.StatusCode == http.StatusNotFound {
 			http.NotFound(w, r)
-			log.Println("Static asset not found on %v: %v", staticUrl, ps["filepath"])
+			log.Printf("Static asset not found on %v: %v\n", staticUrl, ps["filepath"])
 			return
 		} else {
 			http.Error(w, "Upstream error", http.StatusInternalServerError)

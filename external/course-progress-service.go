@@ -25,7 +25,7 @@ func GetCourseProgress(userId string, course string) <-chan CourseProgressResult
 	go func() {
 		defer close(ret)
 
-		url := fmt.Sprintf("%v/%v", config.CourseProgressUrl, userId)
+		url := fmt.Sprintf("%v/progress/%v", config.CourseProgressUrl, userId)
 		if course != "" {
 			url += fmt.Sprintf("/%v", course)
 		}
@@ -69,7 +69,7 @@ func SetTaskProgress(userId string, course string, task string, progress string)
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%v/%v/%v/%v", config.CourseProgressUrl, userId, course, task), bytes.NewBuffer(data))
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%v/progress/%v/%v/%v", config.CourseProgressUrl, userId, course, task), bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}

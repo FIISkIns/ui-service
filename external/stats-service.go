@@ -25,7 +25,7 @@ func GetUserStats(userId string) <-chan StatsResult {
 	go func() {
 		defer close(ret)
 
-		data, err := http.Get(fmt.Sprintf("%v/%v", config.StatsUrl, userId))
+		data, err := http.Get(fmt.Sprintf("%v/stats/%v", config.StatsUrl, userId))
 		if err != nil {
 			ret <- StatsResult{Err: err}
 			return
@@ -49,8 +49,10 @@ func UserStatsPing(userId string) <-chan error {
 	ret := make(chan error, 1)
 
 	go func() {
-		res, err := http.Post(fmt.Sprintf("%v/%v/ping", config.StatsUrl, userId), "", nil)
-		res.Body.Close()
+		res, err := http.Post(fmt.Sprintf("%v/stats/%v/ping", config.StatsUrl, userId), "", nil)
+		if res != nil {
+			res.Body.Close()
+		}
 		ret <- err
 	}()
 

@@ -226,10 +226,12 @@ func HomePage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 
 func LoginPage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	rawQuery := ""
+	returnUrl := r.URL.String()
 	if r.URL.Path == "/login" {
 		rawQuery = r.URL.RawQuery
+		returnUrl = "/"
 	}
-	res, err := external.DoLoginFlow(rawQuery, r.URL.String())
+	res, err := external.DoLoginFlow(rawQuery, returnUrl)
 	if err != nil {
 		log.Println("DoLoginFlow:", err)
 		http.Error(w, "Could not access login service", http.StatusInternalServerError)
