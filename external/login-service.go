@@ -3,6 +3,8 @@ package external
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/dimiro1/health"
+	healthurl "github.com/dimiro1/health/url"
 	"net/http"
 	"net/url"
 )
@@ -44,4 +46,8 @@ func GetUserInfo(userId string) (response *UserInfo, err error) {
 
 	err = json.NewDecoder(res.Body).Decode(&response)
 	return
+}
+
+func GetLoginHealthCheck() health.Checker {
+	return healthurl.NewChecker(fmt.Sprintf("%v/health", config.LoginUrl))
 }

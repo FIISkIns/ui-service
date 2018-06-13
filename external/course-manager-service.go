@@ -3,6 +3,8 @@ package external
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/dimiro1/health"
+	"github.com/dimiro1/health/url"
 	"net/http"
 )
 
@@ -72,4 +74,8 @@ func GetCourseList() <-chan CourseListResult {
 	}()
 
 	return ret
+}
+
+func GetCourseManagerHealthCheck() health.Checker {
+	return url.NewChecker(fmt.Sprintf("%v/health", config.CourseManagerUrl))
 }

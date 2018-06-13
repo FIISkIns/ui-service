@@ -3,6 +3,8 @@ package external
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/dimiro1/health"
+	"github.com/dimiro1/health/url"
 	"net/http"
 	"sort"
 )
@@ -51,4 +53,8 @@ func GetUserAchievements(userId string) <-chan AchievementsResult {
 
 func GetAchievementStaticUrl() string {
 	return fmt.Sprintf("%v/static", config.AchievementsUrl)
+}
+
+func GetAchievementHealthCheck() health.Checker {
+	return url.NewChecker(fmt.Sprintf("%v/health", config.AchievementsUrl))
 }

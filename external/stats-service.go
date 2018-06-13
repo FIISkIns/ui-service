@@ -3,6 +3,8 @@ package external
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/dimiro1/health"
+	"github.com/dimiro1/health/url"
 	"net/http"
 )
 
@@ -57,4 +59,8 @@ func UserStatsPing(userId string) <-chan error {
 	}()
 
 	return ret
+}
+
+func GetStatsHealthCheck() health.Checker {
+	return url.NewChecker(fmt.Sprintf("%v/health", config.StatsUrl))
 }

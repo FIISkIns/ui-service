@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/dimiro1/health"
+	"github.com/dimiro1/health/url"
 	"net/http"
 )
 
@@ -84,4 +86,8 @@ func SetTaskProgress(userId string, course string, task string, progress string)
 	} else {
 		return nil
 	}
+}
+
+func GetCourseProgressHealthCheck() health.Checker {
+	return url.NewChecker(fmt.Sprintf("%v/health", config.CourseProgressUrl))
 }

@@ -96,9 +96,9 @@ func basePageParams(w http.ResponseWriter, r *http.Request, public bool) (map[st
 		return nil, userId
 	}
 
-	courseInfo := make(map[string]*external.BasicCourseInfo)
+	courseInfo := make(map[string]external.BasicCourseInfo)
 	for _, info := range courseList.Val {
-		courseInfo[info.Id] = &info
+		courseInfo[info.Id] = info
 	}
 
 	startedCourses := make([]string, 0)
@@ -114,13 +114,13 @@ func basePageParams(w http.ResponseWriter, r *http.Request, public bool) (map[st
 		}
 
 		for course, progress := range courseProgress.Val {
-			started := 0
+			completed := 0
 			for _, task := range progress {
-				if task.Progress != "not started" {
-					started++
+				if task.Progress == "completed" {
+					completed++
 				}
 			}
-			if started > 1 {
+			if completed == 0 {
 				startedCourses = append(startedCourses, course)
 			} else {
 				availableCourses = append(availableCourses, course)
@@ -206,7 +206,7 @@ func HomePage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	params["Active"] = "home"
 
 	courseChans := make(map[string]<-chan external.CourseInfoResult)
-	for course, info := range params["Courses"].(map[string]*external.BasicCourseInfo) {
+	for course, info := range params["Courses"].(map[string]external.BasicCourseInfo) {
 		courseChans[course] = external.GetCourseInfo(info.Url)
 	}
 
@@ -302,7 +302,7 @@ func CourseTaskPage(w http.ResponseWriter, r *http.Request, ps map[string]string
 		return
 	}
 	params["TaskInfo"] = taskInfo.Val
-	params["TaskBody"] = renderCourseMarkdown("example", taskInfo.Val.Body)
+	params["TaskBody"] = renderCourseMarkdown(ps["course"], taskInfo.Val.Body)
 
 	next, err := getNextTask(ps["course"], ps["task"], params)
 	if err != nil {

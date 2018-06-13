@@ -5,6 +5,7 @@ import (
 	"github.com/FIISkIns/ui-service/external"
 	"github.com/alexedwards/scs"
 	"github.com/dimfeld/httptreemux"
+	"github.com/dimiro1/health"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 const staticPath = "static"
 
 var sessionManager *scs.Manager
+var healthCheck health.Handler
 
 func getStaticRoot(service string) string {
 	return "/static/" + service
@@ -60,20 +62,34 @@ func StaticResource(w http.ResponseWriter, r *http.Request, _ map[string]string)
 	http.StripPrefix("/static/", http.FileServer(http.Dir(staticPath))).ServeHTTP(w, r)
 }
 
+func HandleHealthCheck(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+	healthCheck.ServeHTTP(w, r)
+}
+
 func main() {
 	initConfig()
 
 	sessionManager = scs.NewCookieManager(config.SessionKey)
 
+	serviceHealth := health.NewCompositeChecker()
+	serviceHealth.AddChecker("Achievements", external.GetAchievementHealthCheck())
+	serviceHealth.AddChecker("Course Manager", external.GetCourseManagerHealthCheck())
+	serviceHealth.AddChecker("Course Progress", external.GetCourseProgressHealthCheck())
+	serviceHealth.AddChecker("Login", external.GetLoginHealthCheck())
+	serviceHealth.AddChecker("Stats", external.GetStatsHealthCheck())
+	healthCheck = health.NewHandler()
+	healthCheck.AddChecker("Internal", serviceHealth)
+
 	router := httptreemux.New()
 	router.GET("/", HomePage)
-	router.GET("/login", LoginPage)
-	router.GET("/logout", LogoutPage)
 	router.GET("/course/:course", CourseRootPage)
 	router.GET("/course/:course/:task", CourseTaskPage)
 	router.GET("/course/:course/:task/next", CourseNextPage)
-	router.GET("/profile", ProfilePage)
+	router.GET("/health", HandleHealthCheck)
+	router.GET("/login", LoginPage)
+	router.GET("/logout", LogoutPage)
 	router.GET("/ping", StatsPing)
+	router.GET("/profile", ProfilePage)
 	router.GET("/static/*filepath", StaticResource)
 	router.GET("/static/:service/*filepath", StaticResourceProxy)
 

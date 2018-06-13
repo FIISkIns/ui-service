@@ -36,6 +36,15 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/dimiro1/health"
+  packages = [
+    ".",
+    "url"
+  ]
+  revision = "22672c48855646f5d54b6315336d2e3fee6eef81"
+
+[[projects]]
+  branch = "master"
   name = "github.com/dustin/go-humanize"
   packages = ["."]
   revision = "02af3965c54e8cacf948b97fef38925c4120652c"
@@ -91,6 +100,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ebb5d1f3b9116a177ce884d4c7668480b41f2d03a390f7982fd04aef30b2ba21"
+  inputs-digest = "104fe89cc8943db8eb44db024666f21a318cf964164398fbc89bb4cfffb6a1c7"
   solver-name = "gps-cdcl"
   solver-version = 1
