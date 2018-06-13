@@ -24,7 +24,7 @@ func getServiceDirectStaticUrl(service string) (string, error) {
 		return external.GetAchievementStaticUrl(), nil
 	}
 
-	course := <-external.GetCourseInfo(service)
+	course := <-external.GetBasicCourseInfo(service)
 	if course.Err != nil {
 		return "", course.Err
 	}
@@ -71,6 +71,7 @@ func main() {
 	router.GET("/logout", LogoutPage)
 	router.GET("/course/:course", CourseRootPage)
 	router.GET("/course/:course/:task", CourseTaskPage)
+	router.GET("/course/:course/:task/next", CourseNextPage)
 	router.GET("/profile", ProfilePage)
 	router.GET("/ping", StatsPing)
 	router.GET("/static/*filepath", StaticResource)

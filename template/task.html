@@ -7,14 +7,29 @@
 				<span>&#9776; Tasks</span>
 			</div>
 			<div class="grey-box">
-				{{$thisId := .TaskInfo.Id}}
 				{{$thisTask := dict}}
-				{{range .Tasks}}
-					{{$groupTitle := .Title | upper}}
-					<h5 style="color: black;">{{$groupTitle}}</h5>
+				{{range $_, $group := .Tasks}}
+					<h5 style="color: black">{{$group.Title | upper}}</h5>
 					<ul class="fa-ul task">
-						{{range $i, $t := .Tasks}}
-							<li><i class="fa-li {{if eq $t.Id $thisId}}{{$_ := set $thisTask "index" ($i | add1)}}{{$_ := set $thisTask "group" $groupTitle}}fas fa-dot-circle{{else if hasKey $thisTask "index"}}{{if not (hasKey $thisTask "nextTask")}}{{$_ := set $thisTask "nextTask" .}}{{end}}far fa-circle{{else}}fas fa-check{{end}}"></i><a href="{{.Id}}" class="task">Task {{$i | add1}} - {{.Title}}</a></li>
+						{{range $i, $t := $group.Tasks}}
+							{{if eq $t.Id $.TaskInfo.Id}}
+								{{$_ := set $thisTask "index" ($i | add1)}}
+								{{$_ := set $thisTask "group" $group.Title}}
+							{{end}}
+							<li style="{{if eq $t.Id $.TaskInfo.Id}}font-weight: bold;{{end}}">
+								{{range $j, $u := (index $.CourseProgress $.CourseId)}}
+									{{if eq $u.TaskId $t.Id}}
+										{{if eq $u.TaskId $.TaskInfo.Id}}
+											<i class="fa-li fas fa-dot-circle"></i>
+										{{else if or (eq $u.Progress "not started") (eq $u.Progress "started")}}
+                                            <i class="fa-li far fa-circle"></i>
+										{{else if eq $u.Progress "completed"}}
+											<i class="fa-li fas fa-check"></i>
+										{{end}}
+									{{end}}
+								{{end}}
+								<a href="{{.Id}}" class="task">Task {{$i | add1}} - {{.Title}}</a>
+							</li>
 						{{end}}
 					</ul>
 				{{end}}
@@ -22,18 +37,18 @@
 		</div>
 		<div class="box" style="padding-top: 0.1rem; padding-left: 2rem; padding-right: 2rem;">
 			<h1 class="task-title">#{{$thisTask.index}} - {{.TaskInfo.Title}}</h1>
-			<h5 class="chapter">EXAMPLE COURSE - {{$thisTask.group}}</h5>
+			<h5 class="chapter">{{(index .Courses .CourseId).Name | upper}} - {{$thisTask.group | upper}}</h5>
 			<div class="task-body">
 				{{.TaskBody}}
 			</div>
-			{{if hasKey $thisTask "nextTask"}}
-				<div class="grid-container-two-columns">
-					<a href="{{$thisTask.nextTask.Id}}" class="button"><span>Continue</span></a>
-					<div>
-						<p>Next task: {{$thisTask.nextTask.Title}}</p>
-					</div>
-				</div>
-			{{end}}
+			<div class="grid-container-two-columns">
+				<a href="/course/{{.CourseId}}/{{.TaskInfo.Id}}/next" class="button {{if not .NextTaskInfo}}blue{{end}}">
+					<span>{{if .NextTaskInfo}}Continue{{else}}Return to home{{end}}</span>
+				</a>
+				{{if .NextTaskInfo}}
+					<div><p>Next task: {{.NextTaskInfo.Title}}</p></div>
+				{{end}}
+			</div>
 		</div>
 	</div>
 </div>

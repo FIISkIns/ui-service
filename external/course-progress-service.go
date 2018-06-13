@@ -1,7 +1,9 @@
 package external
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -55,4 +57,31 @@ func GetCourseProgress(userId string, course string) <-chan CourseProgressResult
 
 func GetAllCourseProgress(userId string) <-chan CourseProgressResult {
 	return GetCourseProgress(userId, "")
+}
+
+func SetTaskProgress(userId string, course string, task string, progress string) error {
+	object := map[string]string{
+		"progress": progress,
+	}
+
+	data, err := json.Marshal(object)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%v/%v/%v/%v", config.CourseProgressUrl, userId, course, task), bytes.NewBuffer(data))
+	if err != nil {
+		return err
+	}
+
+	client := http.Client{}
+	res, err := client.Do(req)
+	defer res.Body.Close()
+	if err != nil {
+		return err
+	} else if res.StatusCode/100 != 2 {
+		return errors.New(fmt.Sprintf("progress set failed %v", res.StatusCode))
+	} else {
+		return nil
+	}
 }

@@ -15,48 +15,34 @@
     </div>
 
     <div class="flex-container">
-        <div class="box image-box">
-            <div class="course-img">
-                <img class="course-image" src="/static/origami.jpg" alt="origami">
-            </div>
-            <div class="course-description">
-                <h3 class="course-title">Origami</h3>
-                <p class="course-intro">
-                    Origami involves the creation of two-dimensional and three-dimensional paper objects, usually entirely by folding. This course will take you through the basics of origami and will also provide you with tutorials for creating models such as animals, birds, geometric shapes and decorative objects.
-                </p>
-                <div class="button-align">
-                    <button class="button"><span>Sign up</span></button>
+        {{range $_, $course := .AvailableCourses}}{{with index $.CourseInfo $course}}
+            <div class="box image-box">
+                <div class="course-img">
+                    <img class="course-image" src="/static/{{$course}}/{{.Picture}}" alt="{{$course}}">
+                </div>
+                <div class="course-description">
+                    <h3 class="course-title">{{.Title}}</h3>
+                    <p class="course-intro">{{.Description}}</p>
+                    <div class="button-align">
+                        <a href="/course/{{$course}}" class="button"><span>Sign up</span></a>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="box image-box">
-            <div class="course-img">
-                <img class="course-image" src="/static/tent.jpg" alt="tent">
-            </div>
-            <div class="course-description">
-                <h3 class="course-title">Survival</h3>
-                <p class="course-intro">
-                    Strengthen your character and learn how to react in any situation! Survival skills training will help you overcome the fear of confronting the unknown and make the best decisions in the most unexpected events. Here you will discover elementary notions of survival in the wild, but also in the urban jungle.
-                </p>
-                <div class="button-align">
-                    <button class="button"><span>Sign up</span></button>
+        {{end}}{{end}}
+        {{range $_, $course := .StartedCourses}}{{with index $.CourseInfo $course}}
+            <div class="box image-box">
+                <div class="course-img">
+                    <img class="course-image" src="/static/{{$course}}/{{.Picture}}" alt="{{$course}}">
+                </div>
+                <div class="course-description">
+                    <h3 class="course-title">{{.Title}}</h3>
+                    <p class="course-intro">{{.Description}}</p>
+                    <div class="button-align">
+                        <a href="/course/{{$course}}" class="button blue"><span>Continue</span></a>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="box image-box">
-            <div class="course-img">
-                <img class="course-image" src="/static/kungfu.jpg" alt="kungfu">
-            </div>
-            <div class="course-description">
-                <h3 class="course-title">Self-defence</h3>
-                <p class="course-intro">
-                    Self-defence is the use of force to protect yourself against someone who is attacking you. In this course you will learn the importance of self-defence, why you should learn it and how to perform basic self-defence methods, such as escaping headlocks, defence against knives, leg grab counters and others.
-                </p>
-                <div class="button-align">
-                    <button class="button"><span>Sign up</span></button>
-                </div>
-            </div>
-        </div>
+        {{end}}{{end}}
     </div>
 </div>
 

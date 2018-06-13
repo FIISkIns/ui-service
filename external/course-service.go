@@ -6,6 +6,12 @@ import (
 	"net/http"
 )
 
+type CourseInfo struct {
+	Title       string
+	Description string
+	Picture     string
+}
+
 type BaseTaskInfo struct {
 	Id    string
 	Title string
@@ -21,6 +27,11 @@ type TaskGroup struct {
 	Tasks []*BaseTaskInfo
 }
 
+type CourseInfoResult struct {
+	Val *CourseInfo
+	Err error
+}
+
 type CourseTasksResult struct {
 	Val []TaskGroup
 	Err error
@@ -29,6 +40,32 @@ type CourseTasksResult struct {
 type TaskInfoResult struct {
 	Val *TaskInfo
 	Err error
+}
+
+func GetCourseInfo(courseUrl string) <-chan CourseInfoResult {
+	ret := make(chan CourseInfoResult, 1)
+
+	go func() {
+		defer close(ret)
+
+		data, err := http.Get(courseUrl)
+		if err != nil {
+			ret <- CourseInfoResult{Err: err}
+			return
+		}
+		defer data.Body.Close()
+
+		var info CourseInfo
+		err = json.NewDecoder(data.Body).Decode(&info)
+		if err != nil {
+			ret <- CourseInfoResult{Err: err}
+			return
+		}
+
+		ret <- CourseInfoResult{Val: &info}
+	}()
+
+	return ret
 }
 
 func GetCourseTasks(courseUrl string) <-chan CourseTasksResult {

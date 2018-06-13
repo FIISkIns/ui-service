@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"github.com/FIISkIns/ui-service/external"
 	"github.com/Masterminds/sprig"
 	"github.com/dustin/go-humanize"
@@ -10,7 +12,6 @@ import (
 	"net/http"
 	"path"
 	"time"
-	"fmt"
 )
 
 const templatePath = "template"
@@ -73,12 +74,13 @@ func basePageParams(w http.ResponseWriter, r *http.Request, public bool) (map[st
 	}
 
 	var pingChan <-chan error
+	var courseProgressChan <-chan external.CourseProgressResult
 	if userInfo != nil {
 		pingChan = external.UserStatsPing(userId)
+		courseProgressChan = external.GetAllCourseProgress(userId)
 	}
 
 	courseListChan := external.GetCourseList()
-	courseProgressChan := external.GetAllCourseProgress(userId)
 
 	if pingChan != nil {
 		err = <-pingChan
@@ -94,31 +96,39 @@ func basePageParams(w http.ResponseWriter, r *http.Request, public bool) (map[st
 		return nil, userId
 	}
 
-	courseInfo := make(map[string]*external.CourseInfo)
+	courseInfo := make(map[string]*external.BasicCourseInfo)
 	for _, info := range courseList.Val {
 		courseInfo[info.Id] = &info
 	}
 
-	courseProgress := <-courseProgressChan
-	if courseProgress.Err != nil {
-		log.Println("GetAllCourseProgress:", courseProgress.Err)
-		http.Error(w, "Could not access course progress", http.StatusInternalServerError)
-		return nil, userId
-	}
-
 	startedCourses := make([]string, 0)
 	availableCourses := make([]string, 0)
-	for course, progress := range courseProgress.Val {
-		started := 0
-		for _, task := range progress {
-			if task.Progress != "not started" {
-				started++
+
+	var courseProgress external.CourseProgressResult
+	if courseProgressChan != nil {
+		courseProgress = <-courseProgressChan
+		if courseProgress.Err != nil {
+			log.Println("GetAllCourseProgress:", courseProgress.Err)
+			http.Error(w, "Could not access course progress", http.StatusInternalServerError)
+			return nil, userId
+		}
+
+		for course, progress := range courseProgress.Val {
+			started := 0
+			for _, task := range progress {
+				if task.Progress != "not started" {
+					started++
+				}
+			}
+			if started > 1 {
+				startedCourses = append(startedCourses, course)
+			} else {
+				availableCourses = append(availableCourses, course)
 			}
 		}
-		if started > 1 {
-			startedCourses = append(startedCourses, course)
-		} else {
-			availableCourses = append(availableCourses, course)
+	} else {
+		for _, info := range courseList.Val {
+			availableCourses = append(availableCourses, info.Id)
 		}
 	}
 
@@ -136,12 +146,80 @@ func logOut(w http.ResponseWriter, r *http.Request, url string) {
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
+func getTaskProgress(course string, task string, params map[string]interface{}) string {
+	courseProgress := params["CourseProgress"].(map[string][]external.TaskProgress)
+	if courseProgress[course] != nil {
+		for _, progress := range courseProgress[course] {
+			if progress.TaskId == task {
+				return progress.Progress
+			}
+		}
+	}
+
+	return ""
+}
+
+func getNextTask(course string, task string, params map[string]interface{}) (string, error) {
+	courseProgress := params["CourseProgress"].(map[string][]external.TaskProgress)
+	if courseProgress[course] != nil {
+		for i, progress := range courseProgress[course] {
+			if progress.TaskId == task {
+				if i+1 < len(courseProgress[course]) {
+					return courseProgress[course][i+1].TaskId, nil
+				} else {
+					return "", nil
+				}
+			}
+		}
+	}
+
+	return "", errors.New("task not found")
+}
+
+func setTaskProgressWithParams(userId string, course string, task string, progress string, params map[string]interface{}) error {
+	err := external.SetTaskProgress(userId, course, task, progress)
+	if err != nil {
+		return err
+	}
+
+	updated := false
+	for _, group := range params["CourseProgress"].(map[string][]external.TaskProgress) {
+		for _, t := range group {
+			if t.TaskId == task {
+				t.Progress = progress
+				updated = true
+			}
+		}
+	}
+	if !updated {
+		return errors.New("task not found in progress")
+	}
+
+	return nil
+}
+
 func HomePage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	params, _ := basePageParams(w, r, true)
 	if params == nil {
 		return
 	}
 	params["Active"] = "home"
+
+	courseChans := make(map[string]<-chan external.CourseInfoResult)
+	for course, info := range params["Courses"].(map[string]*external.BasicCourseInfo) {
+		courseChans[course] = external.GetCourseInfo(info.Url)
+	}
+
+	courses := make(map[string]*external.CourseInfo)
+	for course, infoChan := range courseChans {
+		info := <-infoChan
+		if info.Err != nil {
+			log.Println("GetCourseInfo:", course, info.Err)
+			continue
+		}
+		courses[course] = info.Val
+	}
+	params["CourseInfo"] = courses
 
 	renderPage(w, "home", params)
 }
@@ -190,15 +268,16 @@ func CourseRootPage(w http.ResponseWriter, r *http.Request, ps map[string]string
 }
 
 func CourseTaskPage(w http.ResponseWriter, r *http.Request, ps map[string]string) {
-	params, _ := basePageParams(w, r, false)
+	params, userId := basePageParams(w, r, false)
 	if params == nil {
 		return
 	}
 	params["Active"] = "course"
+	params["CourseId"] = ps["course"]
 
-	courseInfo := <-external.GetCourseInfo(ps["course"])
+	courseInfo := <-external.GetBasicCourseInfo(ps["course"])
 	if courseInfo.Err != nil {
-		log.Println("GetCourseInfo:", courseInfo.Err)
+		log.Println("GetBasicCourseInfo:", courseInfo.Err)
 		http.Error(w, "Could not access course manager", http.StatusInternalServerError)
 		return
 	}
@@ -223,7 +302,56 @@ func CourseTaskPage(w http.ResponseWriter, r *http.Request, ps map[string]string
 	params["TaskInfo"] = taskInfo.Val
 	params["TaskBody"] = renderCourseMarkdown("example", taskInfo.Val.Body)
 
+	next, err := getNextTask(ps["course"], ps["task"], params)
+	if err != nil {
+		log.Println("getNextTask:", err)
+		http.Error(w, "Error getting next task", http.StatusInternalServerError)
+		return
+	}
+	if next != "" {
+		for _, group := range courseTasks.Val {
+			for _, task := range group.Tasks {
+				if task.Id == next {
+					params["NextTaskInfo"] = task
+					break
+				}
+			}
+		}
+	}
+
+	progress := getTaskProgress(ps["course"], ps["task"], params)
+	if progress != "completed" {
+		setTaskProgressWithParams(userId, ps["course"], ps["task"], "started", params)
+	}
+
 	renderPage(w, "task", params)
+}
+
+func CourseNextPage(w http.ResponseWriter, r *http.Request, ps map[string]string) {
+	params, userId := basePageParams(w, r, false)
+	if params == nil {
+		return
+	}
+
+	next, err := getNextTask(ps["course"], ps["task"], params)
+	if err != nil {
+		log.Println("getNextTask:", err)
+		http.Error(w, "Error getting next task", http.StatusInternalServerError)
+		return
+	}
+
+	err = setTaskProgressWithParams(userId, ps["course"], ps["task"], "completed", params)
+	if err != nil {
+		log.Println("SetTaskProgress:", err)
+		http.Error(w, "Error saving task progress", http.StatusInternalServerError)
+		return
+	}
+
+	if next != "" {
+		http.Redirect(w, r, fmt.Sprintf("/course/%v/%v", ps["course"], next), http.StatusFound)
+	} else {
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
 }
 
 func ProfilePage(w http.ResponseWriter, r *http.Request, _ map[string]string) {

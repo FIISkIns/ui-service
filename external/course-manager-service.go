@@ -6,43 +6,43 @@ import (
 	"net/http"
 )
 
-type CourseInfo struct {
+type BasicCourseInfo struct {
 	Id   string
 	Name string
 	Url  string
 }
 
-type CourseInfoResult struct {
-	Val *CourseInfo
+type BasicCourseInfoResult struct {
+	Val *BasicCourseInfo
 	Err error
 }
 
 type CourseListResult struct {
-	Val []CourseInfo
+	Val []BasicCourseInfo
 	Err error
 }
 
-func GetCourseInfo(courseId string) <-chan CourseInfoResult {
-	ret := make(chan CourseInfoResult, 1)
+func GetBasicCourseInfo(courseId string) <-chan BasicCourseInfoResult {
+	ret := make(chan BasicCourseInfoResult, 1)
 
 	go func() {
 		defer close(ret)
 
 		data, err := http.Get(fmt.Sprintf("%v/courses/%v", config.CourseManagerUrl, courseId))
 		if err != nil {
-			ret <- CourseInfoResult{Err: err}
+			ret <- BasicCourseInfoResult{Err: err}
 			return
 		}
 		defer data.Body.Close()
 
-		var info *CourseInfo
+		var info *BasicCourseInfo
 		err = json.NewDecoder(data.Body).Decode(&info)
 		if err != nil {
-			ret <- CourseInfoResult{Err: err}
+			ret <- BasicCourseInfoResult{Err: err}
 			return
 		}
 
-		ret <- CourseInfoResult{Val: info}
+		ret <- BasicCourseInfoResult{Val: info}
 	}()
 
 	return ret
@@ -61,7 +61,7 @@ func GetCourseList() <-chan CourseListResult {
 		}
 		defer data.Body.Close()
 
-		var list []CourseInfo
+		var list []BasicCourseInfo
 		err = json.NewDecoder(data.Body).Decode(&list)
 		if err != nil {
 			ret <- CourseListResult{Err: err}

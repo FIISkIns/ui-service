@@ -81,7 +81,7 @@ nav .logo {
 }
 
 nav .active {
-	background-color: rgba(0, 0, 0, 0.05);
+	background-color: rgba(0, 0, 0, 0.12);
 }
 
 nav .submenu {
@@ -335,6 +335,10 @@ a.task {
 	font-size: 1rem;
 	padding: 1rem;
 	transition: all 0.5s;
+}
+
+.button.blue {
+	background-color: rgb(65, 147, 217);
 }
 
 .button span {
