@@ -16,7 +16,7 @@
 								{{$_ := set $thisTask "index" ($i | add1)}}
 								{{$_ := set $thisTask "group" $group.Title}}
 							{{end}}
-							<li style="{{if eq $t.Id $.TaskInfo.Id}}font-weight: bold;{{end}}">
+							<li>
 								{{range $j, $u := (index $.CourseProgress $.CourseId)}}
 									{{if eq $u.TaskId $t.Id}}
 										{{if eq $u.TaskId $.TaskInfo.Id}}
@@ -43,7 +43,7 @@
 			</div>
 			<div class="grid-container-two-columns">
 				<a href="/course/{{.CourseId}}/{{.TaskInfo.Id}}/next" class="button {{if not .NextTaskInfo}}blue{{end}}">
-					<span>{{if .NextTaskInfo}}Continue{{else}}Return to home{{end}}</span>
+					<span>{{if .NextTaskInfo}}Continue{{else}}Learn more{{end}}</span>
 				</a>
 				{{if .NextTaskInfo}}
 					<div><p>Next task: {{.NextTaskInfo.Title}}</p></div>

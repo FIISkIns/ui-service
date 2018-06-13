@@ -15,7 +15,14 @@
                     <div id="profile-description">
                         <hr class="white-hr">
                         <span class="big">
-                            Achievements: 3 <small>out of</small> 10<br>
+                            {{$achievements := dict "total" 0 "completed" 0}}
+                            {{range $_, $achievement := .Achievements}}
+                                {{$_ := set $achievements "total" ((index $achievements "total") | add1)}}
+                                {{if ge $achievement.Completion 100}}
+                                    {{$_ := set $achievements "completed" ((index $achievements "completed") | add1)}}
+                                {{end}}
+                            {{end}}
+                            Achievements: {{$achievements.completed}} <small>out of</small> {{$achievements.total}}<br>
                             Courses: {{.UserStats.CompletedCourses}} <small>out of</small> {{.UserStats.StartedCourses}}<br>
                             Time spent learning: {{div .UserStats.TimeSpent 3600}} h<br>
                             Longest streak: {{.UserStats.LongestStreak}} {{.UserStats.LongestStreak | plural "day" "days"}}<br>
@@ -28,7 +35,7 @@
         </div>
         <div class="grid-item">
             <div class="box achievements-box">
-                <h1 style="width: 100%;text-align: center;"> Achievements </h1>
+                <h1 style="width: 100%;text-align: center;">Achievements</h1>
                 <hr class="black-hr">
                 <div id="achievements-container">
                     {{range $i, $achievement := .Achievements}}

@@ -9,6 +9,13 @@
     <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="referrer" content="origin-when-cross-origin" />
+    <script type="text/javascript">
+        setInterval(function() {
+            var request = new XMLHttpRequest();
+            request.open("GET", "/ping", true);
+            request.send(null);
+        }, 1000 * 60 * 5);
+    </script>
 </head>
 <body>
     <nav>
