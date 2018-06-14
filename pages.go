@@ -120,7 +120,7 @@ func basePageParams(w http.ResponseWriter, r *http.Request, public bool) (map[st
 					completed++
 				}
 			}
-			if completed == 0 {
+			if completed > 0 {
 				startedCourses = append(startedCourses, course)
 			} else {
 				availableCourses = append(availableCourses, course)
@@ -252,18 +252,18 @@ func CourseRootPage(w http.ResponseWriter, r *http.Request, ps map[string]string
 		return
 	}
 
-	var nextTask string
-	for _, task := range params["CourseProgress"].(map[string][]external.TaskProgress)[ps["course"]] {
-		if task.Progress == "not started" && nextTask == "" {
+	tasks := params["CourseProgress"].(map[string][]external.TaskProgress)[ps["course"]]
+
+	nextTask := tasks[0].TaskId
+	takeNext := false
+	for _, task := range tasks {
+		if task.Progress == "completed" {
 			nextTask = task.TaskId
-		} else if task.Progress != "not started" {
+			takeNext = true
+		} else if takeNext {
 			nextTask = task.TaskId
+			takeNext = false
 		}
-	}
-	if nextTask == "" {
-		log.Println("Course", ps["course"], "has no tasks")
-		http.Error(w, "Course is broken, come back later", http.StatusInternalServerError)
-		return
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/course/%v/%v", ps["course"], nextTask), http.StatusFound)

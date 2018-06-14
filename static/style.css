@@ -26,6 +26,10 @@ body > .container {
 	margin-bottom: 2rem;
 }
 
+.task-container {
+	margin-bottom: 2rem;
+}
+
 .box {
 	background-color: white;
 	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.25);
@@ -307,6 +311,13 @@ a.task {
 	margin-bottom: 0;
 	margin-top: 0;
 	padding: 0;
+}
+
+.task-container {
+	max-width: 70rem;
+	margin-left: auto;
+	margin-top: 5rem;
+	margin-right: auto;
 }
 
 /* Button CSS */
@@ -717,8 +728,8 @@ a.task {
 		padding: 1rem;
 	}
 
-	.task-image {
-		max-width: 18rem;
+	.task-body img {
+		max-width: 90%;
 	}
 
 	.grey-box {
@@ -747,7 +758,7 @@ a.task {
 		transition: max-height 2s ease;
 	}
 
-	body > .container {
+	.task-container {
 		margin-top: 0;
 	}
 }
@@ -762,9 +773,8 @@ a.task {
 		padding: 1.5rem 1rem 1rem 1rem;
 	}
 
-	.task-image {
-		max-width: 25rem;
-		padding: 1rem;
+	.task-body img {
+		max-width: 90%;
 	}
 
 	ul.task {
@@ -796,7 +806,7 @@ a.task {
 		transition: max-height 2s ease;
 	}
 
-	body > .container {
+	.task-container {
 		margin-top: 3rem;
 	}
 }
